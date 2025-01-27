@@ -3,16 +3,16 @@ import { faker } from '@faker-js/faker';
 
 let authToken;
 
-test.describe('Product API', () => {
+test.describe('Product', () => {
   test.beforeAll(async ({ request }) => {
     // Search for an admin user
-    const usuarioResponse = await request.get('https://serverest.dev/usuarios');
+    const usuarioResponse = await request.get('/usuarios');
     const { usuarios } = await usuarioResponse.json();
     const admins = usuarios.filter((usuario) => usuario.administrador === 'true');
     const { email, password } = admins[0];
 
     // Login with a valid admin user
-    const loginResponse = await request.post('https://serverest.dev/login', { data: { email, password } });
+    const loginResponse = await request.post('/login', { data: { email, password } });
     expect(loginResponse.status()).toBe(200);
     const body = await loginResponse.json();
     authToken = body.authorization;
@@ -27,23 +27,20 @@ test.describe('Product API', () => {
     };
 
     // Register a product
-    const produtoResponse = await request.post('https://serverest.dev/produtos', {
+    const produtoResponse = await request.post('/produtos', {
       headers: { Authorization: authToken },
       data: produto
     });
-    const body = await produtoResponse.json();
-    console.log(body)
+    const { _id, message } = await produtoResponse.json();
+
     if (produtoResponse.status() === 201) {
-      expect(body.message).toBe('Cadastro realizado com sucesso');
+      expect(message).toBe('Cadastro realizado com sucesso');
     } else {
-      expect(body.message).toBe('Já existe produto com esse nome');
+      expect(message).toBe('Já existe produto com esse nome');
     }
-    const { _id } = await produtoResponse.json();
 
     // Check if the product was registered
-    const getProdutoResponse = await request.get(`https://serverest.dev/produtos/${_id}`, { headers: { Authorization: authToken } });
-    console.log(getProdutoResponse)
-    console.log('body:', await getProdutoResponse.json())
+    const getProdutoResponse = await request.get(`/produtos/${_id}`, { headers: { Authorization: authToken } });
     const { nome, preco, descricao, quantidade } = await getProdutoResponse.json();
     expect(nome).toBe(produto.nome);
     expect(preco).toBe(produto.preco);
@@ -51,7 +48,7 @@ test.describe('Product API', () => {
     expect(quantidade).toBe(produto.quantidade);
 
     // Edit the product
-    const editProdutoResponse = await request.put(`https://serverest.dev/produtos/${_id}`, {
+    const editProdutoResponse = await request.put(`/produtos/${_id}`, {
       headers: {
         Authorization: authToken
       },
@@ -62,12 +59,14 @@ test.describe('Product API', () => {
         quantidade: 100
       }
     });
+    const editProdutoBody = await editProdutoResponse.json()
     expect(editProdutoResponse.status()).toBe(200);
-    expect((await editProdutoResponse.json()).message).toBe('Registro alterado com sucesso');
+    expect(editProdutoBody.message).toBe('Registro alterado com sucesso');
 
     // Delete the product
-    const deleteResponse = await request.delete(`https://serverest.dev/produtos/${_id}`, { headers: { Authorization: authToken } });
+    const deleteResponse = await request.delete(`/produtos/${_id}`, { headers: { Authorization: authToken } });
+    const deleteBody = await deleteResponse.json();
     expect(deleteResponse.status()).toBe(200);
-    expect((await deleteResponse.json()).message).toBe('Registro excluído com sucesso');
+    expect(deleteBody.message).toBe('Registro excluído com sucesso');
   });
 });

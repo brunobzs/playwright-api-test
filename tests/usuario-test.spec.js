@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { faker } from "@faker-js/faker";
 
-test.describe('User API Test', () => {
+test.describe('User', () => {
   test('Should create a new user and delete it successfully', async ({ request}) => {
     // Step 1: Create a new user
-    const createResponse = await request.post('https://serverest.dev/usuarios', {
+    const createResponse = await request.post('/usuarios', {
       data: {
         nome: faker.person.fullName(),
         email: faker.internet.email(),
@@ -18,13 +18,15 @@ test.describe('User API Test', () => {
     const { _id } = await createResponse.json();
 
     // Step 3: Delete the user
-    const deleteResponse = await request.delete(`https://serverest.dev/usuarios/${_id}`);
+    const deleteResponse = await request.delete(`/usuarios/${_id}`);
+    const deleteBody = await deleteResponse.json();
     expect(deleteResponse.status()).toBe(200);
-    expect((await deleteResponse.json()).message).toBe('Registro excluído com sucesso');
+    expect(deleteBody.message).toBe('Registro excluído com sucesso');
 
     // Step 4: Verify deletion
-    const getResponse = await request.get(`https://serverest.dev/usuarios/${_id}`);
+    const getResponse = await request.get(`/usuarios/${_id}`);
+    const getBody = await getResponse.json();
     expect(getResponse.status()).toBe(400);
-    expect((await getResponse.json()).message).toBe('Usuário não encontrado');
+    expect(getBody.message).toBe('Usuário não encontrado');
   });
 });
